@@ -36,7 +36,7 @@ class Clearpostcache_Command extends WP_CLI_Command {
 			clean_post_cache( $post->ID );
 			$cleared++;
 		}
-		WP_CLI::success( sprintf( '%s posts flushed.', $cleared ) );
+		WP_CLI::success( sprintf( '%d posts flushed.', $cleared ) );
 	}
 
 }
