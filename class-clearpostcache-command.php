@@ -25,18 +25,30 @@ class Clearpostcache_Command extends WP_CLI_Command {
 	 */
 	public function __invoke( $_, $assoc_args ) {
 
-		$defaults	 = array(
-			'posts_per_page' => -1,
-			'post_status'	 => 'any'
+		$defaults		 = array(
+			'posts_per_page' => 100,
+			'post_status'	 => 'any',
+			'fields'		 => 'ids',
+			'paged'			 => 1
 		);
-		$query_args	 = array_merge( $defaults, $assoc_args );
-		$query		 = new WP_Query( $query_args );
-		$cleared	 = 0;
-		foreach ( $query->posts as $post ) {
-			clean_post_cache( $post->ID );
-			$cleared++;
+		$query_args		 = array_merge( $defaults, $assoc_args );
+		$query			 = new WP_Query( $query_args );
+		$post_ids		 = $query->posts;
+		$current_page	 = $query->get( 'paged' );
+		$total			 = $query->max_num_pages;
+		$notify			 = \WP_CLI\Utils\make_progress_bar( 'Cleaning Post Caches:', $query->found_posts );
+		$done			 = 0;
+		while ( $current_page <= $total ) {
+			$query->set( 'paged', $current_page );
+			$query->get_posts();
+			foreach ( $query->posts as $id ) {
+				clean_post_cache( $id );
+				$notify->tick();
+				$done++;
+			}
+			$current_page++;
 		}
-		WP_CLI::success( sprintf( '%d posts flushed.', $cleared ) );
+		WP_CLI::success( sprintf( '%d of %d posts flushed.', $done, $query->found_posts ) );
 	}
 
 }
